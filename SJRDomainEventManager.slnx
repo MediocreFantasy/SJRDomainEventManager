@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SJRDomainEventManager/SJRDomainEventManager.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SJRDomainEventManager.Tests/SJRDomainEventManager.Tests.csproj" />
+  </Folder>
+</Solution>
