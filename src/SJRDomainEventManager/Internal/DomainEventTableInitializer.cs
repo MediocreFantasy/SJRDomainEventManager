@@ -3,19 +3,20 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
+using SJRDomainEventManager.PublicFacing.CallMethodsForSetup;
 
-namespace SJRDomainEventManager;
+namespace SJRDomainEventManager.Internal;
 
 /// <summary>
-/// Creates the <see cref="DomainEvent"/> outbox table when it is missing.
+/// Creates the <see cref="DatabaseFlattenedDomainEvent"/> outbox table when it is missing.
 /// </summary>
 public static class DomainEventTableInitializer
 {
     /// <summary>
-    /// Ensures the database behind the given context contains the <see cref="DomainEvent"/> table.
+    /// Ensures the database behind the given context contains the <see cref="DatabaseFlattenedDomainEvent"/> table.
     /// </summary>
     /// <exception cref="InvalidOperationException">
-    /// The model of the context does not map <see cref="DomainEvent"/>; call
+    /// The model of the context does not map <see cref="DatabaseFlattenedDomainEvent"/>; call
     /// <see cref="DomainEventModelBuilderExtensions.AddDomainEvents(ModelBuilder, string?)"/> from
     /// <see cref="DbContext.OnModelCreating(ModelBuilder)"/>.
     /// </exception>
@@ -42,9 +43,9 @@ public static class DomainEventTableInitializer
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var entityType = context.Model.FindEntityType(typeof(DomainEvent))
+        var entityType = context.Model.FindEntityType(typeof(DatabaseFlattenedDomainEvent))
             ?? throw new InvalidOperationException(
-                $"The model of '{context.GetType().Name}' does not contain '{nameof(DomainEvent)}'. " +
+                $"The model of '{context.GetType().Name}' does not contain '{nameof(DatabaseFlattenedDomainEvent)}'. " +
                 $"Call modelBuilder.{nameof(DomainEventModelBuilderExtensions.AddDomainEvents)}() " +
                 "in OnModelCreating.");
 
@@ -76,7 +77,7 @@ public static class DomainEventTableInitializer
     {
         try
         {
-            context.Set<DomainEvent>().Take(1).Any();
+            context.Set<DatabaseFlattenedDomainEvent>().Take(1).Any();
             return true;
         }
         catch (Exception)

@@ -1,4 +1,4 @@
-namespace SJRDomainEventManager;
+namespace SJRDomainEventManager.PublicFacing.ApplyInterfacesForFunctionality;
 
 /// <summary>
 /// A domain event. Every domain event is uniquely identified by a <see cref="Guid"/>.

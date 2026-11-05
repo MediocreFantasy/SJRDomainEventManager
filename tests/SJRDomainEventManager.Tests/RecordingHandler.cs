@@ -1,3 +1,4 @@
+using SJRDomainEventManager.PublicFacing;
 using System.Collections.Concurrent;
 
 namespace SJRDomainEventManager.Tests;

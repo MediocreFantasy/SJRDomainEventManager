@@ -1,3 +1,4 @@
+using SJRDomainEventManager.PublicFacing.ApplyInterfacesForFunctionality;
 using System.Text.Json;
 
 namespace SJRDomainEventManager;

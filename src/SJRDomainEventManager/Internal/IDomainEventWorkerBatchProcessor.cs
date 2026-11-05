@@ -1,9 +1,9 @@
-namespace SJRDomainEventManager;
+namespace SJRDomainEventManager.Internal;
 
 /// <summary>
 /// Handles a batch of domain events stored in the outbox table.
 /// </summary>
-public interface IOutboxBatchProcessor
+public interface IDomainEventWorkerBatchProcessor
 {
     /// <summary>
     /// Handles the next batch of unprocessed domain events.

@@ -4,6 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SJRDomainEventManager.Internal;
+using SJRDomainEventManager.PublicFacing;
+using SJRDomainEventManager.PublicFacing.CallMethodsForSetup;
 using Xunit;
 
 namespace SJRDomainEventManager.Tests;
@@ -106,14 +109,14 @@ public class DomainEventManagerTests : IDisposable
         var services = new ServiceCollection()
             .AddLogging()
             .AddSingleton<IDomainEventHandler<CustomerRenamed>>(handler)
-            .AddSingleton(new OutboxOptions())
+            .AddSingleton(new DomainEventManagerOptions())
             .BuildServiceProvider();
 
-        var processor = new OutboxBatchProcessor<OutboxTestContext>(
+        var processor = new DomainEventWorkerBatchProcessor<OutboxTestContext>(
             context,
             services,
-            new OutboxOptions(),
-            services.GetRequiredService<ILogger<OutboxBatchProcessor<OutboxTestContext>>>());
+            new DomainEventManagerOptions(),
+            services.GetRequiredService<ILogger<DomainEventWorkerBatchProcessor<OutboxTestContext>>>());
 
         var processed = await processor.ProcessBatchAsync(CancellationToken.None);
 
@@ -129,7 +132,7 @@ public class DomainEventManagerTests : IDisposable
     {
         using var context = CreateInitializedContext();
 
-        context.DomainEvents.Add(new DomainEvent
+        context.DomainEvents.Add(new DatabaseFlattenedDomainEvent
         {
             Id = Guid.NewGuid(),
             EventType = "Unknown.Event, Unknown",
@@ -140,11 +143,11 @@ public class DomainEventManagerTests : IDisposable
 
         var services = new ServiceCollection().AddLogging().BuildServiceProvider();
 
-        var processor = new OutboxBatchProcessor<OutboxTestContext>(
+        var processor = new DomainEventWorkerBatchProcessor<OutboxTestContext>(
             context,
             services,
-            new OutboxOptions(),
-            services.GetRequiredService<ILogger<OutboxBatchProcessor<OutboxTestContext>>>());
+            new DomainEventManagerOptions(),
+            services.GetRequiredService<ILogger<DomainEventWorkerBatchProcessor<OutboxTestContext>>>());
 
         Assert.Equal(0, await processor.ProcessBatchAsync(CancellationToken.None));
 

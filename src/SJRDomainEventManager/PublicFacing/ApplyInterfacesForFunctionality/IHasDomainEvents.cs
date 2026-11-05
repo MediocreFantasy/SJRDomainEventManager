@@ -1,4 +1,4 @@
-namespace SJRDomainEventManager;
+namespace SJRDomainEventManager.PublicFacing.ApplyInterfacesForFunctionality;
 
 /// <summary>
 /// An entity that raises domain events.

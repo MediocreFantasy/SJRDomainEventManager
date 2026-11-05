@@ -1,4 +1,6 @@
-namespace SJRDomainEventManager;
+using SJRDomainEventManager.PublicFacing.ApplyInterfacesForFunctionality;
+
+namespace SJRDomainEventManager.PublicFacing;
 
 /// <summary>
 /// Handles domain events of type <typeparamref name="T"/>.

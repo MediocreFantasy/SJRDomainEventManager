@@ -1,4 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using SJRDomainEventManager.Internal;
+using SJRDomainEventManager.PublicFacing.ApplyInterfacesForFunctionality;
+using SJRDomainEventManager.PublicFacing.CallMethodsForSetup;
 
 namespace SJRDomainEventManager.Tests;
 
@@ -22,7 +25,7 @@ public class OutboxTestContext(DbContextOptions<OutboxTestContext> options) : Db
 {
     public DbSet<Customer> Customers => Set<Customer>();
 
-    public DbSet<DomainEvent> DomainEvents => Set<DomainEvent>();
+    public DbSet<DatabaseFlattenedDomainEvent> DomainEvents => Set<DatabaseFlattenedDomainEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -32,14 +35,14 @@ public class OutboxTestContext(DbContextOptions<OutboxTestContext> options) : Db
 
     public override int SaveChanges()
     {
-        this.CollectDomainEvents();
+        this.CollectAndStoreDomainEvents();
 
         return base.SaveChanges();
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        this.CollectDomainEvents();
+        this.CollectAndStoreDomainEvents();
 
         return base.SaveChangesAsync(cancellationToken);
     }

@@ -1,9 +1,11 @@
-namespace SJRDomainEventManager;
+using SJRDomainEventManager.PublicFacing.ApplyInterfacesForFunctionality;
+
+namespace SJRDomainEventManager.Internal;
 
 /// <summary>
 /// The persisted (outbox) representation of an <see cref="IDomainEvent"/>.
 /// </summary>
-public class DomainEvent
+public class DatabaseFlattenedDomainEvent
 {
     /// <summary>
     /// The name of the table holding the persisted domain events.
@@ -43,11 +45,11 @@ public class DomainEvent
     /// <summary>
     /// Creates the persisted representation of the given domain event.
     /// </summary>
-    public static DomainEvent FromDomainEvent(IDomainEvent Event)
+    public static DatabaseFlattenedDomainEvent FromDomainEvent(IDomainEvent Event)
     {
         ArgumentNullException.ThrowIfNull(Event);
 
-        return new DomainEvent
+        return new DatabaseFlattenedDomainEvent
         {
             Id = Event.Id,
             EventType = DomainEventSerializer.GetTypeName(Event.GetType()),

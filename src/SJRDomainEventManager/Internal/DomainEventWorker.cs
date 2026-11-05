@@ -1,16 +1,17 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SJRDomainEventManager.PublicFacing.CallMethodsForSetup;
 
-namespace SJRDomainEventManager;
+namespace SJRDomainEventManager.Internal;
 
 /// <summary>
 /// Drains the domain event outbox in the background.
 /// </summary>
-public sealed class OutboxWorker(
+public sealed class DomainEventWorker(
     IServiceScopeFactory scopeFactory,
-    OutboxOptions options,
-    ILogger<OutboxWorker> logger) : BackgroundService
+    DomainEventManagerOptions options,
+    ILogger<DomainEventWorker> logger) : BackgroundService
 {
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -22,7 +23,7 @@ public sealed class OutboxWorker(
                 await using var scope = scopeFactory.CreateAsyncScope();
 
                 var processor = scope.ServiceProvider
-                    .GetRequiredService<IOutboxBatchProcessor>();
+                    .GetRequiredService<IDomainEventWorkerBatchProcessor>();
 
                 var processedCount =
                     await processor.ProcessBatchAsync(stoppingToken);

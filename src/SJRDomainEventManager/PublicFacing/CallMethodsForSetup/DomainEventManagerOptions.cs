@@ -1,9 +1,9 @@
-namespace SJRDomainEventManager;
+namespace SJRDomainEventManager.PublicFacing.CallMethodsForSetup;
 
 /// <summary>
 /// Options controlling how the domain event outbox is drained.
 /// </summary>
-public sealed class OutboxOptions
+public sealed class DomainEventManagerOptions
 {
     /// <summary>
     /// The maximum number of domain events handled per batch. Defaults to 20.
