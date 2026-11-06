@@ -113,8 +113,10 @@ public class DomainEventManagerTests : IDisposable
 
         var domainEvent = Assert.IsType<BasicAdditionDomainEvent<Customer>>(
             DomainEventSerializer.Deserialize(stored.JsonedData, typeof(BasicAdditionDomainEvent<Customer>)));
-        Assert.Equal(customer.Id, domainEvent.Entity.Id);
-        Assert.Equal("Ada", domainEvent.Entity.Name);
+        Assert.Equal(typeof(Customer), domainEvent.EntityType);
+        Assert.Equal(typeof(Guid), domainEvent.PrimaryKeyType);
+        Assert.Equal(customer.Id, domainEvent.PrimaryKey);
+        Assert.DoesNotContain("name", stored.JsonedData, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -135,8 +137,10 @@ public class DomainEventManagerTests : IDisposable
 
         var domainEvent = Assert.IsType<BasicUpdateDomainEvent<Customer>>(
             DomainEventSerializer.Deserialize(stored.JsonedData, typeof(BasicUpdateDomainEvent<Customer>)));
-        Assert.Equal(customer.Id, domainEvent.Entity.Id);
-        Assert.Equal("Grace", domainEvent.Entity.Name);
+        Assert.Equal(typeof(Customer), domainEvent.EntityType);
+        Assert.Equal(typeof(Guid), domainEvent.PrimaryKeyType);
+        Assert.Equal(customer.Id, domainEvent.PrimaryKey);
+        Assert.DoesNotContain("name", stored.JsonedData, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -157,8 +161,30 @@ public class DomainEventManagerTests : IDisposable
 
         var domainEvent = Assert.IsType<BasicDeletionDomainEvent<Customer>>(
             DomainEventSerializer.Deserialize(stored.JsonedData, typeof(BasicDeletionDomainEvent<Customer>)));
-        Assert.Equal(customer.Id, domainEvent.Entity.Id);
-        Assert.Equal("Ada", domainEvent.Entity.Name);
+        Assert.Equal(typeof(Customer), domainEvent.EntityType);
+        Assert.Equal(typeof(Guid), domainEvent.PrimaryKeyType);
+        Assert.Equal(customer.Id, domainEvent.PrimaryKey);
+        Assert.DoesNotContain("name", stored.JsonedData, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void SaveChanges_PreservesIntegerPrimaryKeyTypeInBasicDomainEvent()
+    {
+        using var context = CreateInitializedContext();
+
+        var customer = new LegacyCustomer { Id = 42, Name = "Ada" };
+        context.LegacyCustomers.Add(customer);
+        context.SaveChanges();
+
+        var eventType = typeof(BasicAdditionDomainEvent<LegacyCustomer>);
+        var stored = context.DomainEvents.AsNoTracking().Single();
+        var domainEvent = Assert.IsType<BasicAdditionDomainEvent<LegacyCustomer>>(
+            DomainEventSerializer.Deserialize(stored.JsonedData, eventType));
+
+        Assert.Equal(typeof(LegacyCustomer), domainEvent.EntityType);
+        Assert.Equal(typeof(int), domainEvent.PrimaryKeyType);
+        Assert.IsType<int>(domainEvent.PrimaryKey);
+        Assert.Equal(42, domainEvent.PrimaryKey);
     }
 
     [Fact]

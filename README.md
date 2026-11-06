@@ -103,6 +103,9 @@ public class Customer : IHasDomainEvents
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
 
+    public object GetPrimaryKey() => Id;
+    public Type GetPrimaryKeyType() => typeof(Guid);
+
     public void Rename(string name)
     {
         Name = name;
@@ -148,7 +151,7 @@ public sealed class CustomerUpdatedHandler : IDomainEventHandler<BasicUpdateDoma
         BasicUpdateDomainEvent<Customer> Event,
         CancellationToken cancellationToken = default)
     {
-        var customer = Event.Entity;
+        var customerId = (Guid)Event.PrimaryKey;
         // Notify interested clients that the customer changed.
         return Task.CompletedTask;
     }
@@ -184,9 +187,9 @@ SJRDomainEventManager.slnx
 | `IDomainEvent` | Defines a domain event with a unique `Guid Id`. |
 | `IHasDomainEvents` | Exposes the domain events raised by an entity. |
 | `IDomainEventHandler<T>` | Handles domain events of type `T`. |
-| `BasicAdditionDomainEvent<T>` | Automatically describes an added `IHasDomainEvents` entity. |
-| `BasicUpdateDomainEvent<T>` | Automatically describes a modified `IHasDomainEvents` entity. |
-| `BasicDeletionDomainEvent<T>` | Automatically describes a deleted `IHasDomainEvents` entity. |
+| `BasicAdditionDomainEvent<T>` | Identifies an added entity by its type, primary key, and key type. |
+| `BasicUpdateDomainEvent<T>` | Identifies a modified entity by its type, primary key, and key type. |
+| `BasicDeletionDomainEvent<T>` | Identifies a deleted entity by its type, primary key, and key type. |
 | `ModelBuilder.AddDomainEvents` | Maps the `DomainEvents` outbox table. |
 | `DbContext.CollectAndStoreDomainEvents` | Adds raised domain events to the current EF Core transaction. |
 | `IServiceCollection.RegisterBackgroundWorker` | Ensures the outbox table exists and registers its worker. |

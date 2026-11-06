@@ -74,6 +74,10 @@ public static class DomainEventCollector
             return null;
 
         var eventType = genericEventType.MakeGenericType(entry.Metadata.ClrType);
-        return (IDomainEvent)Activator.CreateInstance(eventType, Guid.NewGuid(), entry.Entity)!;
+        return (IDomainEvent)Activator.CreateInstance(
+            eventType,
+            Guid.NewGuid(),
+            entry.Entity.GetPrimaryKey(),
+            entry.Entity.GetPrimaryKeyType())!;
     }
 }
