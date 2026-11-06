@@ -15,6 +15,28 @@ public class Customer : IHasDomainEvents
 
     public string Name { get; set; } = string.Empty;
 
+    public object GetPrimaryKey() => Id;
+
+    public Type GetPrimaryKeyType() => typeof(Guid);
+
+    public void CreateDomainEvent<T>(T Event)
+        where T : IDomainEvent => _domainEvents.Add(Event);
+
+    public List<IDomainEvent> GetAllDomainEvents() => _domainEvents;
+}
+
+public class LegacyCustomer : IHasDomainEvents
+{
+    private readonly List<IDomainEvent> _domainEvents = [];
+
+    public int Id { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public object GetPrimaryKey() => Id;
+
+    public Type GetPrimaryKeyType() => typeof(int);
+
     public void CreateDomainEvent<T>(T Event)
         where T : IDomainEvent => _domainEvents.Add(Event);
 
@@ -25,11 +47,14 @@ public class OutboxTestContext(DbContextOptions<OutboxTestContext> options) : Db
 {
     public DbSet<Customer> Customers => Set<Customer>();
 
+    public DbSet<LegacyCustomer> LegacyCustomers => Set<LegacyCustomer>();
+
     public DbSet<DatabaseFlattenedDomainEvent> DomainEvents => Set<DatabaseFlattenedDomainEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Customer>().HasKey(customer => customer.Id);
+        modelBuilder.Entity<LegacyCustomer>().HasKey(customer => customer.Id);
         modelBuilder.AddDomainEvents();
     }
 

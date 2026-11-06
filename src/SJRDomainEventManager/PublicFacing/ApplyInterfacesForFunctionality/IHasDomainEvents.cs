@@ -6,6 +6,16 @@ namespace SJRDomainEventManager.PublicFacing.ApplyInterfacesForFunctionality;
 public interface IHasDomainEvents
 {
     /// <summary>
+    /// Gets the primary key value of this entity.
+    /// </summary>
+    object GetPrimaryKey();
+
+    /// <summary>
+    /// Gets the type of this entity's primary key.
+    /// </summary>
+    Type GetPrimaryKeyType();
+
+    /// <summary>
     /// Raises the given domain event on this entity.
     /// </summary>
     /// <typeparam name="T">The type of the domain event.</typeparam>
