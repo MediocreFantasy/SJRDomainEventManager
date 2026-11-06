@@ -69,7 +69,8 @@ public class DomainEventManagerTests : IDisposable
         context.Customers.Add(customer);
         context.SaveChanges();
 
-        var stored = Assert.Single(context.DomainEvents.AsNoTracking().ToList());
+        var stored = context.DomainEvents.AsNoTracking()
+            .Single(domainEvent => domainEvent.EventType == DomainEventSerializer.GetTypeName(typeof(CustomerRenamed)));
         Assert.Equal(domainEvent.Id, stored.Id);
         Assert.Equal(DomainEventSerializer.GetTypeName(typeof(CustomerRenamed)), stored.EventType);
         Assert.Null(stored.ProcessedOnUtc);
@@ -92,7 +93,72 @@ public class DomainEventManagerTests : IDisposable
         customer.Name = "Grace";
         context.SaveChanges();
 
-        Assert.Single(context.DomainEvents.AsNoTracking().ToList());
+        Assert.Single(context.DomainEvents.AsNoTracking()
+            .Where(domainEvent => domainEvent.EventType == DomainEventSerializer.GetTypeName(typeof(CustomerRenamed))));
+    }
+
+    [Fact]
+    public void SaveChanges_CreatesBasicAdditionDomainEvent()
+    {
+        using var context = CreateInitializedContext();
+
+        var customer = new Customer { Id = Guid.NewGuid(), Name = "Ada" };
+        context.Customers.Add(customer);
+        context.SaveChanges();
+
+        var stored = context.DomainEvents.AsNoTracking().Single();
+        Assert.Equal(
+            DomainEventSerializer.GetTypeName(typeof(BasicAdditionDomainEvent<Customer>)),
+            stored.EventType);
+
+        var domainEvent = Assert.IsType<BasicAdditionDomainEvent<Customer>>(
+            DomainEventSerializer.Deserialize(stored.JsonedData, typeof(BasicAdditionDomainEvent<Customer>)));
+        Assert.Equal(customer.Id, domainEvent.Entity.Id);
+        Assert.Equal("Ada", domainEvent.Entity.Name);
+    }
+
+    [Fact]
+    public void SaveChanges_CreatesBasicUpdateDomainEvent()
+    {
+        using var context = CreateInitializedContext();
+
+        var customer = new Customer { Id = Guid.NewGuid(), Name = "Ada" };
+        context.Customers.Add(customer);
+        context.SaveChanges();
+
+        customer.Name = "Grace";
+        context.SaveChanges();
+
+        var eventType = DomainEventSerializer.GetTypeName(typeof(BasicUpdateDomainEvent<Customer>));
+        var stored = context.DomainEvents.AsNoTracking()
+            .Single(domainEvent => domainEvent.EventType == eventType);
+
+        var domainEvent = Assert.IsType<BasicUpdateDomainEvent<Customer>>(
+            DomainEventSerializer.Deserialize(stored.JsonedData, typeof(BasicUpdateDomainEvent<Customer>)));
+        Assert.Equal(customer.Id, domainEvent.Entity.Id);
+        Assert.Equal("Grace", domainEvent.Entity.Name);
+    }
+
+    [Fact]
+    public void SaveChanges_CreatesBasicDeletionDomainEvent()
+    {
+        using var context = CreateInitializedContext();
+
+        var customer = new Customer { Id = Guid.NewGuid(), Name = "Ada" };
+        context.Customers.Add(customer);
+        context.SaveChanges();
+
+        context.Customers.Remove(customer);
+        context.SaveChanges();
+
+        var eventType = DomainEventSerializer.GetTypeName(typeof(BasicDeletionDomainEvent<Customer>));
+        var stored = context.DomainEvents.AsNoTracking()
+            .Single(domainEvent => domainEvent.EventType == eventType);
+
+        var domainEvent = Assert.IsType<BasicDeletionDomainEvent<Customer>>(
+            DomainEventSerializer.Deserialize(stored.JsonedData, typeof(BasicDeletionDomainEvent<Customer>)));
+        Assert.Equal(customer.Id, domainEvent.Entity.Id);
+        Assert.Equal("Ada", domainEvent.Entity.Name);
     }
 
     [Fact]
@@ -120,9 +186,9 @@ public class DomainEventManagerTests : IDisposable
 
         var processed = await processor.ProcessBatchAsync(CancellationToken.None);
 
-        Assert.Equal(1, processed);
+        Assert.Equal(2, processed);
         Assert.Equal("Ada", Assert.Single(handler.Handled).Name);
-        Assert.NotNull(context.DomainEvents.AsNoTracking().Single().ProcessedOnUtc);
+        Assert.All(context.DomainEvents.AsNoTracking(), domainEvent => Assert.NotNull(domainEvent.ProcessedOnUtc));
 
         Assert.Equal(0, await processor.ProcessBatchAsync(CancellationToken.None));
     }

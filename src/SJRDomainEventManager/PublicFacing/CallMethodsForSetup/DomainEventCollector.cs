@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using SJRDomainEventManager.Internal;
+using SJRDomainEventManager.PublicFacing;
 using SJRDomainEventManager.PublicFacing.ApplyInterfacesForFunctionality;
 
 namespace SJRDomainEventManager.PublicFacing.CallMethodsForSetup;
@@ -10,8 +12,9 @@ namespace SJRDomainEventManager.PublicFacing.CallMethodsForSetup;
 public static class DomainEventCollector
 {
     /// <summary>
-    /// Serializes every domain event raised by the tracked <see cref="IHasDomainEvents"/> entities
-    /// and adds it to the <see cref="DatabaseFlattenedDomainEvent"/> table of the context.
+    /// Creates basic addition, update, and deletion events for changed <see cref="IHasDomainEvents"/>
+    /// entities, then serializes those and every explicitly raised domain event to the
+    /// <see cref="DatabaseFlattenedDomainEvent"/> table of the context.
     /// Call this at the beginning of <see cref="DbContext.SaveChanges()"/>, so the domain events are
     /// persisted in the same transaction as the entities raising them.
     /// </summary>
@@ -21,10 +24,13 @@ public static class DomainEventCollector
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var raised = context.ChangeTracker
+        var entries = context.ChangeTracker
             .Entries<IHasDomainEvents>()
-            .Select(entry => entry.Entity)
-            .SelectMany(entity => entity.GetAllDomainEvents())
+            .ToList();
+
+        var raised = entries
+            .SelectMany(entry => entry.Entity.GetAllDomainEvents())
+            .Concat(entries.Select(CreateBasicDomainEvent).OfType<IDomainEvent>())
             .Where(domainEvent => domainEvent is not null)
             .GroupBy(domainEvent => domainEvent.Id)
             .Select(group => group.First())
@@ -52,5 +58,22 @@ public static class DomainEventCollector
             context.Set<DatabaseFlattenedDomainEvent>().AddRange(collected);
 
         return collected;
+    }
+
+    private static IDomainEvent? CreateBasicDomainEvent(EntityEntry<IHasDomainEvents> entry)
+    {
+        var genericEventType = entry.State switch
+        {
+            EntityState.Added => typeof(BasicAdditionDomainEvent<>),
+            EntityState.Modified => typeof(BasicUpdateDomainEvent<>),
+            EntityState.Deleted => typeof(BasicDeletionDomainEvent<>),
+            _ => null
+        };
+
+        if (genericEventType is null)
+            return null;
+
+        var eventType = genericEventType.MakeGenericType(entry.Metadata.ClrType);
+        return (IDomainEvent)Activator.CreateInstance(eventType, Guid.NewGuid(), entry.Entity)!;
     }
 }

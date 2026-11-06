@@ -39,8 +39,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 }
 ```
 
-This stores domain events in the same transaction as the entities that raised them. Duplicate event
-IDs are skipped.
+This stores domain events in the same transaction as the entities that raised them. It also creates
+`BasicAdditionDomainEvent<T>`, `BasicUpdateDomainEvent<T>`, or `BasicDeletionDomainEvent<T>` for
+each added, modified, or deleted `IHasDomainEvents` entity. Duplicate event IDs are skipped.
 
 ### 2. Register the worker in `Program.cs`
 
@@ -137,6 +138,23 @@ public sealed class CustomerRenamedHandler : IDomainEventHandler<CustomerRenamed
 Successfully handled events receive a `ProcessedOnUtc` timestamp. Failures are written to `Error`
 and retried on the next worker pass.
 
+For general entity notifications, handlers can consume the automatically created events without
+requiring the entity to raise a custom event:
+
+```csharp
+public sealed class CustomerUpdatedHandler : IDomainEventHandler<BasicUpdateDomainEvent<Customer>>
+{
+    public Task Handle(
+        BasicUpdateDomainEvent<Customer> Event,
+        CancellationToken cancellationToken = default)
+    {
+        var customer = Event.Entity;
+        // Notify interested clients that the customer changed.
+        return Task.CompletedTask;
+    }
+}
+```
+
 ## Project structure
 
 ```text
@@ -166,6 +184,9 @@ SJRDomainEventManager.slnx
 | `IDomainEvent` | Defines a domain event with a unique `Guid Id`. |
 | `IHasDomainEvents` | Exposes the domain events raised by an entity. |
 | `IDomainEventHandler<T>` | Handles domain events of type `T`. |
+| `BasicAdditionDomainEvent<T>` | Automatically describes an added `IHasDomainEvents` entity. |
+| `BasicUpdateDomainEvent<T>` | Automatically describes a modified `IHasDomainEvents` entity. |
+| `BasicDeletionDomainEvent<T>` | Automatically describes a deleted `IHasDomainEvents` entity. |
 | `ModelBuilder.AddDomainEvents` | Maps the `DomainEvents` outbox table. |
 | `DbContext.CollectAndStoreDomainEvents` | Adds raised domain events to the current EF Core transaction. |
 | `IServiceCollection.RegisterBackgroundWorker` | Ensures the outbox table exists and registers its worker. |
