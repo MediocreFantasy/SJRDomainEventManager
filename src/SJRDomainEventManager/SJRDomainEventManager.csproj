@@ -4,6 +4,9 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	  <PackageId>SJRDomainEventManager</PackageId>
+	  <Version>1.1.0</Version>
+	  <RepositoryUrl>https://github.com/MediocreFantasy/SJRDomainEventManager</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
